@@ -73,7 +73,7 @@ body {
   padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 
-button { font: inherit; color: inherit; }
+button { font: inherit; color: inherit; touch-action: manipulation; }
 
 .top {
   display: flex;
@@ -231,7 +231,8 @@ main {
 .wheel-wrap {
   position: relative;
   width: 100%;
-  max-width: min(760px, calc(100dvh - 210px));
+  max-width: min(760px, calc(100vh - 210px));
+  max-width: min(760px, calc(100svh - 210px));
   aspect-ratio: 1 / 1;
   container-type: inline-size;
   --zoom: 1;
@@ -520,10 +521,17 @@ a { color: var(--accent); }
 
 /* Dialogs */
 
+html:has(dialog[open]) {
+  overflow: hidden;
+}
+
 dialog {
   width: min(560px, calc(100vw - 24px));
-  max-height: calc(100dvh - 24px);
+  max-height: calc(100vh - 24px);
+  max-height: calc(100svh - 24px);
   overflow: hidden;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
   padding: 0;
   border: 1px solid var(--border);
   border-radius: 20px;
