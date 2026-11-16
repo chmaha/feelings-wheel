@@ -36,7 +36,6 @@
     <section class="status">
       <nav class="crumbs" id="crumbs" data-i18n-aria="selectedFeeling"></nav>
       <p class="prompt" id="prompt"></p>
-      <button type="button" class="add-btn" id="add" hidden></button>
       <button type="button" class="reset" id="reset" data-i18n="startOver" hidden>Start over</button>
     </section>
 
@@ -46,7 +45,10 @@
         <span class="switch-track" aria-hidden="true"></span>
         <span data-i18n="reveal">Reveal as you go</span>
       </label>
-      <svg id="wheel" viewBox="-500 -500 1000 1000" role="group" data-i18n-aria="title"></svg>
+      <div class="wheel-wrap" id="wheel-wrap">
+        <svg id="wheel" viewBox="-500 -500 1000 1000" role="group" data-i18n-aria="title"></svg>
+        <button type="button" class="add-btn wheel-add" id="add" hidden></button>
+      </div>
     </section>
 
     <section id="boxes-view" class="view" hidden>

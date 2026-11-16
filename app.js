@@ -59,6 +59,7 @@
     crumbs: $("crumbs"),
     prompt: $("prompt"),
     add: $("add"),
+    wheelWrap: $("wheel-wrap"),
     reset: $("reset"),
     wheelView: $("wheel-view"),
     boxesView: $("boxes-view"),
@@ -242,7 +243,7 @@
     });
 
     rotor.appendChild(g);
-    const seg = { path, depth, g, d, text, mid: (a0 + a1) / 2, r: (r0 + r1) / 2 };
+    const seg = { path, depth, g, d, text, a0, a1, mid: (a0 + a1) / 2, r: (r0 + r1) / 2 };
     segments.push(seg);
     placeLabel(seg);
   }
@@ -298,17 +299,137 @@
     let delta = (targetDeg - rotation) % 360;
     if (delta > 180) delta -= 360;
     if (delta <= -180) delta += 360;
-    if (Math.abs(delta) < 1e-6) return;
+    if (Math.abs(delta) < 1e-6) return false;
     finishFlips();
     rotation += delta;
     rotor.style.transform = `rotate(${rotation.toFixed(3)}deg)`;
     pendingFlips = segments.filter((seg) => wantsFlip(seg) !== seg.flip);
     if (reduceMotion.matches) {
       finishFlips();
-      return;
+      return true;
     }
     pendingFlips.forEach((seg) => seg.text.classList.add("flipping"));
     flipTimer = setTimeout(finishFlips, REVEAL_MS);
+    return true;
+  }
+
+  // Zoom
+
+  const FULL_VIEW = [-500, -500, 1000, 1000];
+  const SPIN_MS = 700;
+  const ZOOM_BELOW = 560;
+  const ADD_ROOM = 70;
+  let view = FULL_VIEW.slice();
+  let viewAnim = null;
+  let addTimer = null;
+
+  const ZOOM_BELOW_TOUCH = 900;
+  const coarsePointer = window.matchMedia("(pointer: coarse)");
+  const zoomEnabled = () => {
+    const w = els.svg.clientWidth;
+    return w > 0 && (w < ZOOM_BELOW || (coarsePointer.matches && w < ZOOM_BELOW_TOUCH));
+  };
+  const easeOut = (t) => 1 - (1 - t) ** 3;
+
+  function leafAddSide(leaf) {
+    const siblings = nodeAt(leaf.slice(0, -1)).children.length;
+    return leaf[2] === siblings - 1 ? 1 : -1;
+  }
+
+  function targetView() {
+    const sel = state.sel;
+    if (!sel.length || !zoomEnabled()) return FULL_VIEW;
+    const base = sel.length === 3 ? sel.slice(0, 2) : sel;
+    const rot = (rotation * Math.PI) / 180;
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    const include = (x, y) => {
+      x0 = Math.min(x0, x); x1 = Math.max(x1, x);
+      y0 = Math.min(y0, y); y1 = Math.max(y1, y);
+    };
+    for (const s of segments) {
+      const isBase = samePath(s.path, base);
+      const isChild = s.path.length === base.length + 1 && isPrefix(base, s.path);
+      if (!isBase && !isChild) continue;
+      for (let i = 0; i <= 12; i++) {
+        const a = s.a0 + ((s.a1 - s.a0) * i) / 12 + rot;
+        for (const r of [RADII[s.depth], RADII[s.depth + 1]]) include(r * Math.cos(a), r * Math.sin(a));
+      }
+    }
+    if (sel.length >= 2) {
+      const leafSeg = segments.find((s) => s.path.length === 3 && isPrefix(base, s.path));
+      const half = (leafSeg.a1 - leafSeg.a0) / 2;
+      const edge = RADII[3] * Math.sin(half) + ADD_ROOM;
+      include(RADII[2], -edge);
+      include(RADII[2], edge);
+    }
+    const pad = 16;
+    const side = Math.max(x1 - x0, y1 - y0) + pad * 2;
+    return [(x0 + x1) / 2 - side / 2, (y0 + y1) / 2 - side / 2, side, side];
+  }
+
+  function applyView() {
+    els.svg.setAttribute("viewBox", view.map((v) => v.toFixed(2)).join(" "));
+  }
+
+  function animateView(target) {
+    cancelAnimationFrame(viewAnim);
+    const from = view.slice();
+    if (from.every((v, i) => Math.abs(v - target[i]) < 0.01)) return false;
+    if (reduceMotion.matches) {
+      view = target.slice();
+      applyView();
+      return true;
+    }
+    const start = performance.now();
+    const step = (now) => {
+      const p = Math.min(1, (now - start) / SPIN_MS);
+      const e = easeOut(p);
+      view = from.map((v, i) => v + (target[i] - v) * e);
+      applyView();
+      if (p < 1) viewAnim = requestAnimationFrame(step);
+    };
+    viewAnim = requestAnimationFrame(step);
+    return true;
+  }
+
+  function placeAddButton() {
+    const sel = state.sel;
+    const seg = segments.find((s) => samePath(s.path, sel));
+    if (!seg) return;
+    const rot = (rotation * Math.PI) / 180;
+    const side = leafAddSide(sel);
+    const scale = els.svg.clientWidth / view[2];
+    const toPx = (x, y) => [(x - view[0]) * scale, (y - view[1]) * scale];
+    const half = (seg.a1 - seg.a0) / 2;
+    const a = seg.mid + rot;
+    const [cx] = toPx(seg.r * Math.cos(a), 0);
+    const [, edgeY] = toPx(0, RADII[3] * Math.sin(a + side * half));
+    const b = els.add;
+    b.style.left = `${cx}px`;
+    b.style.top = `${edgeY + side * 8}px`;
+    b.style.transform = `translate(-50%, ${side > 0 ? "0" : "-100%"})`;
+  }
+
+  function updateAddButton(delayed) {
+    clearTimeout(addTimer);
+    const show = state.mode === "wheel" && state.sel.length === 3;
+    if (!show) {
+      els.add.hidden = true;
+      return;
+    }
+    const added = state.justAdded && samePath(state.justAdded, state.sel);
+    els.add.textContent = added ? t("added") : t("add");
+    els.add.disabled = Boolean(added);
+    const reveal = () => {
+      placeAddButton();
+      els.add.hidden = false;
+    };
+    if (delayed && !reduceMotion.matches) {
+      els.add.hidden = true;
+      addTimer = setTimeout(reveal, SPIN_MS);
+    } else {
+      reveal();
+    }
   }
 
   function buildWheel() {
@@ -360,7 +481,9 @@
         outlineLayer.appendChild(svgEl("path", { class: "outline", d: s.d }));
       }
     }
-    rotateTo(focus ? -(focus.mid * 180) / Math.PI : 0);
+    const turned = rotateTo(focus ? -(focus.mid * 180) / Math.PI : 0);
+    const zoomed = animateView(targetView());
+    updateAddButton(turned || zoomed);
   }
 
   // Boxes
@@ -473,13 +596,6 @@
     els.prompt.textContent = promptText(path, hovering);
     els.reset.hidden = state.sel.length === 0;
 
-    const showAdd = state.mode === "wheel" && state.sel.length === 3;
-    els.add.hidden = !showAdd;
-    if (showAdd) {
-      const added = state.justAdded && samePath(state.justAdded, state.sel);
-      els.add.textContent = added ? t("added") : t("add");
-      els.add.disabled = Boolean(added);
-    }
   }
 
   // My list
@@ -711,6 +827,10 @@
   els.add.addEventListener("click", addCurrent);
   window.addEventListener("resize", () => {
     if (state.mode === "boxes") layoutBoxes();
+    else {
+      animateView(targetView());
+      updateAddButton(false);
+    }
   });
 
   els.reveal.checked = state.reveal;
