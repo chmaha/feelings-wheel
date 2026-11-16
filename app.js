@@ -40,7 +40,7 @@
   const state = {
     sel: [],
     hover: null,
-    mode: store.get("mode", window.innerWidth < 600 ? "boxes" : "wheel"),
+    mode: store.get("mode", "wheel"),
     reveal: store.get("reveal", true) !== false,
     lang: initialLang(),
     theme: store.get("theme", "auto"),
