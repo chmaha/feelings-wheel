@@ -64,6 +64,6 @@ Issues and pull requests are welcome: bug fixes, accessibility improvements and 
 
 ## Credits and licence
 
-The feelings wheel was created by Dr Gloria Willcox (1982); this app uses a widely shared later adaptation of it.
+Based on the Feel Wheel by Geoffrey Roberts (2015), adapted from Gloria Willcox's Feeling Wheel (1982).
 
 The code is released under the [MIT License](LICENSE). © 2026 Christopher Hampson.

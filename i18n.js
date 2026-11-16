@@ -81,7 +81,7 @@ const STRINGS = {
     privacyLine: "Everything you add stays on this device. Nothing is sent anywhere.",
     privacyLink: "Privacy policy",
     source: "Source code",
-    credit: "Based on the Feelings Wheel created by Dr Gloria Willcox (1982) and later adaptations.",
+    credit: "Based on the Feel Wheel by Geoffrey Roberts (2015), adapted from Gloria Willcox's Feeling Wheel (1982).",
     getStarted: "Get started",
   },
 };
