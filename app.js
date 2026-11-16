@@ -41,7 +41,7 @@
     sel: [],
     hover: null,
     mode: store.get("mode", window.innerWidth < 600 ? "boxes" : "wheel"),
-    reveal: store.get("reveal", false) === true,
+    reveal: store.get("reveal", true) !== false,
     lang: initialLang(),
     theme: store.get("theme", "auto"),
     askReflect: store.get("askReflect", true) !== false,
