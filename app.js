@@ -90,6 +90,13 @@
     themeButtons: document.querySelectorAll("[data-theme-opt]"),
     langSelect: $("lang"),
     askReflect: $("ask-reflect"),
+    installBanner: $("install-banner"),
+    installHow: $("install-how"),
+    installBtn: $("install-btn"),
+    installDismiss: $("install-dismiss"),
+    installSection: $("install-section"),
+    installAboutHow: $("install-about-how"),
+    installAboutBtn: $("install-about-btn"),
   };
 
   const NOTE_KEYS = [
@@ -603,6 +610,7 @@
   function saveList() {
     store.set("list", state.list);
     renderList();
+    renderInstall();
   }
 
   function addCurrent() {
@@ -801,6 +809,88 @@
     new MutationObserver(update).observe(body, { childList: true, subtree: true, characterData: true });
   }
 
+  // Install
+
+  const ua = navigator.userAgent;
+  const isIos = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const isFirefoxAndroid = /Android/.test(ua) && /Firefox\//.test(ua);
+  const isStandalone = () =>
+    window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+  const visits = store.get("visits", 0) + 1;
+  store.set("visits", visits);
+  let installPrompt = null;
+
+  function installMode() {
+    if (isStandalone()) return null;
+    if (installPrompt) return "prompt";
+    if (isIos) return "ios";
+    if (isFirefoxAndroid) return "firefox";
+    return null;
+  }
+
+  function shareIcon() {
+    const svg = svgEl("svg", { viewBox: "0 0 24 24", width: "18", height: "18", class: "share-icon", "aria-label": "Share" });
+    svg.appendChild(svgEl("path", {
+      d: "M12 3v12M7.5 7.5 12 3l4.5 4.5M6 11H5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-8a1 1 0 0 0-1-1h-1",
+      fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linecap": "round", "stroke-linejoin": "round",
+    }));
+    return svg;
+  }
+
+  function fillInstallHow(el, mode) {
+    if (mode === "ios") {
+      const [before, after] = t("installIos", { icon: "\u0000" }).split("\u0000");
+      el.replaceChildren(before, shareIcon(), after ?? "");
+    } else {
+      el.textContent = mode === "firefox" ? t("installFirefox") : t("installText");
+    }
+  }
+
+  function renderInstall() {
+    const mode = installMode();
+    const eligible = state.list.length > 0 || visits >= 2;
+    els.installBanner.hidden = !mode || !eligible || store.get("installDismissed", false);
+    els.installSection.hidden = !mode;
+    if (!mode) return;
+    fillInstallHow(els.installHow, mode);
+    fillInstallHow(els.installAboutHow, mode);
+    els.installBtn.hidden = mode !== "prompt";
+    els.installAboutBtn.hidden = mode !== "prompt";
+  }
+
+  async function promptInstall() {
+    if (!installPrompt) return;
+    const prompt = installPrompt;
+    prompt.prompt();
+    try { await prompt.userChoice; } catch {}
+    installPrompt = null;
+    renderInstall();
+  }
+
+  async function requestPersistence() {
+    if (!isStandalone() || !navigator.storage?.persist) return;
+    try {
+      if (!(await navigator.storage.persisted())) await navigator.storage.persist();
+    } catch {}
+  }
+
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    installPrompt = e;
+    renderInstall();
+  });
+  window.addEventListener("appinstalled", () => {
+    installPrompt = null;
+    renderInstall();
+    toast(t("installed"));
+  });
+  els.installBtn.addEventListener("click", promptInstall);
+  els.installAboutBtn.addEventListener("click", promptInstall);
+  els.installDismiss.addEventListener("click", () => {
+    store.set("installDismissed", true);
+    renderInstall();
+  });
+
   // Settings
 
   function applyTheme() {
@@ -824,6 +914,7 @@
     updateWheelText();
     render();
     renderList();
+    renderInstall();
   }
 
   // Mode
@@ -922,6 +1013,8 @@
   applyTheme();
   applyStaticText();
   renderList();
+  renderInstall();
+  requestPersistence();
   setMode(state.mode);
 
   if (!store.get("introSeen", false)) els.aboutDialog.showModal();

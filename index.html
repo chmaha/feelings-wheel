@@ -33,6 +33,16 @@
   </header>
 
   <main id="main">
+    <section class="install-banner" id="install-banner" hidden>
+      <img src="icons/icon-192.png" alt="" width="40" height="40">
+      <div class="install-text">
+        <strong data-i18n="installTitle"></strong>
+        <span class="install-how" id="install-how"></span>
+        <button type="button" class="btn primary" id="install-btn" data-i18n="installButton" hidden></button>
+      </div>
+      <button type="button" class="icon-btn small" id="install-dismiss" data-i18n-aria="dismiss">✕</button>
+    </section>
+
     <section class="status">
       <nav class="crumbs" id="crumbs" data-i18n-aria="selectedFeeling"></nav>
       <p class="prompt" id="prompt"></p>
@@ -143,6 +153,12 @@
       <li data-i18n="how2"></li>
       <li data-i18n="how3"></li>
     </ol>
+
+    <div id="install-section" hidden>
+      <h3 data-i18n="installSection"></h3>
+      <p class="install-how" id="install-about-how"></p>
+      <button type="button" class="btn primary" id="install-about-btn" data-i18n="installButton" hidden></button>
+    </div>
 
     <h3 data-i18n="settingsTitle"></h3>
     <div class="setting">

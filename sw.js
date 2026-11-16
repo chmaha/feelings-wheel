@@ -1,4 +1,4 @@
-const CACHE = "feelings-v2";
+const CACHE = "feelings-v3";
 const ASSETS = [
   "./",
   "index.html",
