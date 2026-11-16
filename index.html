@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Feelings Wheel</title>
+  <meta name="description" content="Find the word for what you're feeling, using an interactive feelings wheel or step by step.">
+  <meta name="theme-color" content="#6e3a8c">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Feelings">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <script>try{var t=JSON.parse(localStorage.getItem("fw:theme"));if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}</script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="top">
+    <h1 data-i18n="title">Feelings Wheel</h1>
+    <div class="toggle mode-toggle" role="group" data-i18n-aria="viewLabel">
+      <button type="button" data-mode="wheel" data-i18n="wheel">Wheel</button>
+      <button type="button" data-mode="boxes" data-i18n="boxes">Step by step</button>
+    </div>
+    <div class="actions">
+      <button type="button" class="pill-btn" id="open-list">
+        <span data-i18n="myList">My list</span>
+        <span class="count" id="list-count" hidden>0</span>
+      </button>
+      <button type="button" class="icon-btn" id="open-about" data-i18n-aria="about">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 11v6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="7.5" r="1.3" fill="currentColor"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="status">
+      <nav class="crumbs" id="crumbs" data-i18n-aria="selectedFeeling"></nav>
+      <p class="prompt" id="prompt"></p>
+      <button type="button" class="add-btn" id="add" hidden></button>
+      <button type="button" class="reset" id="reset" data-i18n="startOver" hidden>Start over</button>
+    </section>
+
+    <section id="wheel-view" class="view">
+      <label class="switch">
+        <input type="checkbox" id="reveal" role="switch">
+        <span class="switch-track" aria-hidden="true"></span>
+        <span data-i18n="reveal">Reveal as you go</span>
+      </label>
+      <svg id="wheel" viewBox="-500 -500 1000 1000" role="group" data-i18n-aria="title"></svg>
+    </section>
+
+    <section id="boxes-view" class="view" hidden>
+      <div id="boxes" class="boxes"></div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <p data-i18n="footer"></p>
+    <p><a href="privacy.html" data-i18n="privacyLink">Privacy policy</a> · <a href="https://github.com/chmaha/feelings-wheel" data-i18n="source">Source code</a></p>
+    <p class="copyright">© 2026 Christopher Hampson</p>
+  </footer>
+
+  <div id="announce" class="sr-only" aria-live="polite"></div>
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+  <dialog id="list-dialog" aria-labelledby="list-title">
+    <div class="dlg-head">
+      <h2 id="list-title" data-i18n="listTitle"></h2>
+      <button type="button" class="icon-btn" data-close data-i18n-aria="close">✕</button>
+    </div>
+    <p class="dlg-note" data-i18n="listPrivacy"></p>
+    <p class="empty" id="list-empty" data-i18n="listEmpty"></p>
+    <ul class="entries" id="entries"></ul>
+    <div class="export" id="export">
+      <div class="toggle small" role="group" data-i18n-aria="format">
+        <button type="button" data-format="sentence" data-i18n="fmtSentence"></button>
+        <button type="button" data-format="detailed" data-i18n="fmtDetailed"></button>
+      </div>
+      <pre class="preview" id="preview" tabindex="0"></pre>
+      <div class="dlg-actions">
+        <button type="button" class="btn primary" id="copy" data-i18n="copy"></button>
+        <button type="button" class="btn" id="share" data-i18n="share" hidden></button>
+        <button type="button" class="btn danger" id="clear" data-i18n="clearAll"></button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="reflect-dialog" aria-labelledby="reflect-title">
+    <form id="reflect-form">
+      <div class="dlg-head">
+        <h2 id="reflect-title"></h2>
+        <button type="button" class="icon-btn" data-close data-i18n-aria="close">✕</button>
+      </div>
+      <p class="dlg-note" data-i18n="reflectIntro"></p>
+      <label class="field">
+        <span data-i18n="qIntensity"></span>
+        <select id="r-intensity"></select>
+      </label>
+      <label class="field">
+        <span data-i18n="qTrigger"></span>
+        <textarea id="r-trigger" rows="2"></textarea>
+      </label>
+      <label class="field">
+        <span data-i18n="qBody"></span>
+        <textarea id="r-body" rows="2"></textarea>
+      </label>
+      <label class="field">
+        <span data-i18n="qThought"></span>
+        <textarea id="r-thought" rows="2"></textarea>
+      </label>
+      <label class="field">
+        <span data-i18n="qNeed"></span>
+        <textarea id="r-need" rows="2"></textarea>
+      </label>
+      <div class="dlg-actions">
+        <button type="submit" class="btn primary" data-i18n="save"></button>
+        <button type="button" class="btn" data-close data-i18n="skip"></button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="about-dialog" aria-labelledby="about-title">
+    <div class="dlg-head">
+      <h2 id="about-title" data-i18n="aboutTitle"></h2>
+      <button type="button" class="icon-btn" data-close data-i18n-aria="close">✕</button>
+    </div>
+    <p data-i18n="aboutWhat"></p>
+    <h3 data-i18n="howTitle"></h3>
+    <ol class="how">
+      <li data-i18n="how1"></li>
+      <li data-i18n="how2"></li>
+      <li data-i18n="how3"></li>
+    </ol>
+
+    <h3 data-i18n="settingsTitle"></h3>
+    <div class="setting">
+      <span id="theme-label" data-i18n="theme"></span>
+      <div class="toggle small" role="group" aria-labelledby="theme-label">
+        <button type="button" data-theme-opt="auto" data-i18n="themeAuto"></button>
+        <button type="button" data-theme-opt="light" data-i18n="themeLight"></button>
+        <button type="button" data-theme-opt="dark" data-i18n="themeDark"></button>
+      </div>
+    </div>
+    <label class="setting" id="lang-setting">
+      <span data-i18n="language"></span>
+      <select id="lang"></select>
+    </label>
+    <label class="switch setting-switch">
+      <input type="checkbox" id="ask-reflect" role="switch">
+      <span class="switch-track" aria-hidden="true"></span>
+      <span data-i18n="askReflect"></span>
+    </label>
+
+    <h3 data-i18n="careTitle"></h3>
+    <p data-i18n="careText"></p>
+    <p><span data-i18n="crisis"></span> <a href="https://findahelpline.com" target="_blank" rel="noopener">findahelpline.com</a>.</p>
+    <p><span data-i18n="privacyLine"></span> <a href="privacy.html" data-i18n="privacyLink"></a></p>
+    <p class="credit" data-i18n="credit"></p>
+
+    <div class="dlg-actions">
+      <button type="button" class="btn primary" data-close data-i18n="getStarted"></button>
+    </div>
+  </dialog>
+
+  <script src="data.js"></script>
+  <script src="i18n.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

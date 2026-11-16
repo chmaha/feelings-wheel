@@ -1,0 +1,85 @@
+const FEELINGS = [
+  {
+    name: "Fearful",
+    colors: ["#ef5fcf", "#e03fbb", "#f24ad2"],
+    children: [
+      ["Scared", ["Helpless", "Frightened"]],
+      ["Anxious", ["Overwhelmed", "Worried"]],
+      ["Insecure", ["Inadequate", "Inferior"]],
+      ["Weak", ["Worthless", "Insignificant"]],
+      ["Rejected", ["Excluded", "Persecuted"]],
+      ["Threatened", ["Nervous", "Exposed"]],
+    ],
+  },
+  {
+    name: "Angry",
+    colors: ["#e84a6a", "#d4334f", "#ec4d69"],
+    children: [
+      ["Let Down", ["Betrayed", "Resentful"]],
+      ["Humiliated", ["Disrespected", "Ridiculed"]],
+      ["Bitter", ["Indignant", "Violated"]],
+      ["Mad", ["Furious", "Jealous"]],
+      ["Aggressive", ["Provoked", "Hostile"]],
+      ["Frustrated", ["Infuriated", "Annoyed"]],
+      ["Distant", ["Withdrawn", "Numb"]],
+      ["Critical", ["Skeptical", "Dismissive"]],
+    ],
+  },
+  {
+    name: "Disgusted",
+    colors: ["#e9915a", "#cf6a14", "#e8894c"],
+    children: [
+      ["Disapproving", ["Judgmental", "Embarrassed"]],
+      ["Disappointed", ["Appalled", "Revolted"]],
+      ["Awful", ["Nauseated", "Detestable"]],
+      ["Repelled", ["Horrified", "Hesitant"]],
+    ],
+  },
+  {
+    name: "Sad",
+    colors: ["#6e3a8c", "#5d1f80", "#7b4f9a"],
+    children: [
+      ["Hurt", ["Embarrassed", "Disappointed"]],
+      ["Depressed", ["Inferior", "Empty"]],
+      ["Guilty", ["Remorseful", "Ashamed"]],
+      ["Despair", ["Powerless", "Grief"]],
+      ["Vulnerable", ["Fragile", "Victimized"]],
+      ["Lonely", ["Abandoned", "Isolated"]],
+    ],
+  },
+  {
+    name: "Happy",
+    colors: ["#f8bd22", "#f39b1d", "#f9b927"],
+    children: [
+      ["Optimistic", ["Inspired", "Hopeful"]],
+      ["Trusting", ["Intimate", "Sensitive"]],
+      ["Peaceful", ["Thankful", "Loving"]],
+      ["Powerful", ["Creative", "Courageous"]],
+      ["Accepted", ["Valued", "Respected"]],
+      ["Proud", ["Confident", "Successful"]],
+      ["Interested", ["Inquisitive", "Curious"]],
+      ["Content", ["Joyful", "Free"]],
+      ["Playful", ["Cheeky", "Aroused"]],
+    ],
+  },
+  {
+    name: "Surprised",
+    colors: ["#93aca1", "#4f7f58", "#93aca1"],
+    children: [
+      ["Excited", ["Energetic", "Eager"]],
+      ["Amazed", ["Awe", "Astonished"]],
+      ["Confused", ["Perplexed", "Disillusioned"]],
+      ["Startled", ["Dismayed", "Shocked"]],
+    ],
+  },
+  {
+    name: "Bad",
+    colors: ["#9b55c9", "#7a3fa6", "#9b55c9"],
+    children: [
+      ["Tired", ["Unfocused", "Sleepy"]],
+      ["Stressed", ["Out of Control", "Overwhelmed"]],
+      ["Busy", ["Rushed", "Pressured"]],
+      ["Bored", ["Apathetic", "Indifferent"]],
+    ],
+  },
+];
