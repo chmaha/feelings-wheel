@@ -232,6 +232,36 @@ main {
   position: relative;
   width: 100%;
   max-width: min(760px, calc(100dvh - 210px));
+  aspect-ratio: 1 / 1;
+  container-type: inline-size;
+  --zoom: 1;
+}
+
+.wheel-clip {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.wheel-zoom {
+  position: absolute;
+  inset: 0;
+  transform-origin: 50% 50%;
+  transition: transform 0.5s cubic-bezier(0.33, 1, 0.68, 1);
+}
+
+.instant .wheel-zoom, .instant #wheel { transition: none; }
+
+.hub-label {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 1.8cqw;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  pointer-events: none;
 }
 
 .wheel-add {
@@ -252,6 +282,9 @@ main {
 #wheel {
   display: block;
   width: 100%;
+  height: 100%;
+  transform-origin: 50% 50%;
+  transition: transform 0.5s cubic-bezier(0.33, 1, 0.68, 1);
   min-width: 0;
   height: auto;
   touch-action: manipulation;
@@ -262,45 +295,36 @@ main {
 .seg { cursor: pointer; outline: none; }
 
 .seg.concealed { pointer-events: none; }
-.seg.concealed text, .seg.concealed.dim text { opacity: 0; }
-.seg.concealed path { opacity: 0.45; filter: saturate(0.45); }
-.seg.concealed.dim path { opacity: 0.16; }
+.seg.concealed text { visibility: hidden; }
+.seg.concealed path { fill-opacity: 0.45; }
+.seg.concealed.dim path { fill-opacity: 0.16; }
 
 .seg path {
   stroke: var(--seam);
-  stroke-width: 1;
+  stroke-width: calc(1px / var(--zoom));
   vector-effect: non-scaling-stroke;
-  transition: opacity 0.2s ease, filter 0.2s ease;
 }
 
 .seg text {
   pointer-events: none;
-  transition: opacity 0.12s ease-out;
 }
 
 .seg:hover path, .seg:focus-visible path { filter: brightness(1.12) saturate(1.1); }
 
-.seg.dim path { opacity: 0.22; }
-.seg.dim text { opacity: 0.35; }
+.seg.dim path { fill-opacity: 0.22; }
+.seg.dim text { fill-opacity: 0.35; }
 
 .outline {
   fill: none;
   stroke: var(--text);
-  stroke-width: 2.5;
+  stroke-width: calc(2.5px / var(--zoom));
   vector-effect: non-scaling-stroke;
   pointer-events: none;
 }
 
-.seg:focus-visible path { stroke: var(--text); stroke-width: 3; }
+.seg:focus-visible path { stroke: var(--text); stroke-width: calc(3px / var(--zoom)); }
 
 .hub { fill: var(--hub); cursor: pointer; }
-
-.hub-text {
-  fill: var(--text);
-  font-size: 18px;
-  font-weight: 600;
-  pointer-events: none;
-}
 
 .boxes {
   --cols: 4;
@@ -403,17 +427,10 @@ main {
 
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; }
+  .more-btn span[aria-hidden] { animation: none; }
 }
 
-.rotor {
-  transform-origin: 0 0;
-  transition: transform 0.7s cubic-bezier(0.33, 1, 0.68, 1);
-}
-
-.seg text.flipping {
-  opacity: 0 !important;
-  transition: opacity 0.08s ease;
-}
+.seg text.flipping { visibility: hidden; }
 
 /* Header actions */
 
@@ -545,6 +562,52 @@ dialog[open], #reflect-form {
 }
 
 .dlg-body > :first-child { margin-top: 0; }
+
+.more-hint {
+  position: sticky;
+  bottom: 0;
+  height: 0;
+  display: none;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.dlg-body.has-more .more-hint { display: flex; }
+
+.more-hint::before {
+  content: "";
+  position: absolute;
+  left: -20px;
+  right: -20px;
+  bottom: -16px;
+  height: 72px;
+  background: linear-gradient(to bottom, transparent, var(--surface-strong) 75%);
+}
+
+.more-btn {
+  position: absolute;
+  bottom: -4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface-strong);
+  color: var(--text);
+  font-size: 0.9rem;
+  font-weight: 600;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.more-btn span[aria-hidden] { animation: nudge 1.6s ease-in-out infinite; }
+
+@keyframes nudge {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(3px); }
+}
 
 dialog h2 { margin: 0; font-size: 1.3rem; }
 dialog h3 { margin: 20px 0 8px; font-size: 1.05rem; }

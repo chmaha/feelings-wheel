@@ -41,6 +41,7 @@ const STRINGS = {
     copied: "Copied to clipboard",
     copyFailed: "Couldn't copy. Select the text and copy it manually.",
     close: "Close",
+    moreBelow: "More below",
     reflectTitle: "Reflect on “{x}”",
     reflectIntro: "All optional. Notes like these can help you put things into words, for example before a therapy session.",
     qIntensity: "How strong is it?",

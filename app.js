@@ -60,6 +60,8 @@
     prompt: $("prompt"),
     add: $("add"),
     wheelWrap: $("wheel-wrap"),
+    zoom: $("wheel-zoom"),
+    hubLabel: $("hub-label"),
     reset: $("reset"),
     wheelView: $("wheel-view"),
     boxesView: $("boxes-view"),
@@ -183,7 +185,6 @@
   let outlineLayer;
   let rotor;
   let hubEl;
-  let hubText;
   let rotation = 0;
   let labelsFitted = false;
 
@@ -218,7 +219,8 @@
     const d = sectorPath(a0, a1, r0, r1);
 
     const g = svgEl("g", { class: "seg", tabindex: "0", role: "button" });
-    g.appendChild(svgEl("path", { d, fill }));
+    const pathEl = svgEl("path", { d, fill });
+    g.appendChild(pathEl);
 
     const text = svgEl("text", {
       "text-anchor": "middle",
@@ -244,9 +246,20 @@
     });
 
     rotor.appendChild(g);
-    const seg = { path, depth, g, d, text, a0, a1, mid: (a0 + a1) / 2, r: (r0 + r1) / 2 };
+    const seg = {
+      path, depth, g, d, text, pathEl, a0, a1,
+      fill, muted: mutedColor(fill), shown: true,
+      mid: (a0 + a1) / 2, r: (r0 + r1) / 2,
+    };
     segments.push(seg);
     placeLabel(seg);
+  }
+
+  function mutedColor(hex) {
+    const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+    const y = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    const m = (v) => Math.round(v + (y - v) * 0.55).toString(16).padStart(2, "0");
+    return `#${m(r)}${m(g)}${m(b)}`;
   }
 
   function updateWheelText() {
@@ -254,7 +267,7 @@
       s.text.textContent = labelOf(s.path);
       s.g.setAttribute("aria-label", labelsOf(s.path).join(", "));
     }
-    hubText.textContent = t("hub");
+    els.hubLabel.textContent = t("hub");
     hubEl.setAttribute("aria-label", t("clearSelection"));
     labelsFitted = false;
   }
@@ -271,7 +284,7 @@
     labelsFitted = true;
   }
 
-  const REVEAL_MS = 400;
+  const REVEAL_MS = 300;
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
   let flipTimer = null;
   let pendingFlips = [];
@@ -303,7 +316,7 @@
     if (Math.abs(delta) < 1e-6) return false;
     finishFlips();
     rotation += delta;
-    rotor.style.transform = `rotate(${rotation.toFixed(3)}deg)`;
+    els.svg.style.transform = `rotate(${rotation.toFixed(3)}deg)`;
     pendingFlips = segments.filter((seg) => wantsFlip(seg) !== seg.flip);
     if (reduceMotion.matches) {
       finishFlips();
@@ -317,13 +330,10 @@
   // Zoom
 
   const FULL_VIEW = [-500, -500, 1000, 1000];
-  const SPIN_MS = 700;
   const ZOOM_BELOW = 560;
   const ADD_ROOM = 110;
   const ADD_GAP = 28;
-  let view = FULL_VIEW.slice();
   let viewTarget = FULL_VIEW.slice();
-  let viewAnim = null;
 
   const ZOOM_BELOW_TOUCH = 900;
   const coarsePointer = window.matchMedia("(pointer: coarse)");
@@ -331,7 +341,6 @@
     const w = els.svg.clientWidth;
     return w > 0 && (w < ZOOM_BELOW || (coarsePointer.matches && w < ZOOM_BELOW_TOUCH));
   };
-  const easeOut = (t) => 1 - (1 - t) ** 3;
 
   function leafAddSide(leaf) {
     const siblings = nodeAt(leaf.slice(0, -1)).children.length;
@@ -373,30 +382,19 @@
     return [(x0 + x1) / 2 - side / 2, (y0 + y1) / 2 - side / 2, side, side];
   }
 
-  function applyView() {
-    els.svg.setAttribute("viewBox", view.map((v) => v.toFixed(2)).join(" "));
+  function applyZoom(target) {
+    viewTarget = target.slice();
+    const scale = 1000 / target[2];
+    const cx = target[0] + target[2] / 2;
+    const cy = target[1] + target[3] / 2;
+    els.wheelWrap.style.setProperty("--zoom", scale.toFixed(4));
+    els.zoom.style.transform =
+      `scale(${scale.toFixed(4)}) translate(${(-cx / 10).toFixed(3)}%, ${(-cy / 10).toFixed(3)}%)`;
   }
 
-  function animateView(target) {
-    cancelAnimationFrame(viewAnim);
-    viewTarget = target.slice();
-    const from = view.slice();
-    if (from.every((v, i) => Math.abs(v - target[i]) < 0.01)) return false;
-    if (reduceMotion.matches) {
-      view = target.slice();
-      applyView();
-      return true;
-    }
-    const start = performance.now();
-    const step = (now) => {
-      const p = Math.min(1, (now - start) / SPIN_MS);
-      const e = easeOut(p);
-      view = from.map((v, i) => v + (target[i] - v) * e);
-      applyView();
-      if (p < 1) viewAnim = requestAnimationFrame(step);
-    };
-    viewAnim = requestAnimationFrame(step);
-    return true;
+  function settleInstantly() {
+    els.wheelWrap.classList.add("instant");
+    requestAnimationFrame(() => requestAnimationFrame(() => els.wheelWrap.classList.remove("instant")));
   }
 
   function placeAddButton() {
@@ -455,8 +453,6 @@
     hubEl = svgEl("circle", { class: "hub", r: RADII[0] - 2, role: "button", tabindex: "0" });
     onActivate(hubEl, () => select([]));
     els.svg.appendChild(hubEl);
-    hubText = svgEl("text", { class: "hub-text", "text-anchor": "middle", "dominant-baseline": "central" });
-    els.svg.appendChild(hubText);
 
     outlineLayer = svgEl("g");
     rotor.appendChild(outlineLayer);
@@ -474,6 +470,10 @@
       const shown = !state.reveal || isPrefix(s.path.slice(0, -1), sel);
       s.g.classList.toggle("dim", !related);
       s.g.classList.toggle("concealed", !shown);
+      if (s.shown !== shown) {
+        s.shown = shown;
+        s.pathEl.setAttribute("fill", shown ? s.fill : s.muted);
+      }
       s.g.setAttribute("tabindex", shown ? "0" : "-1");
       s.g.setAttribute("aria-hidden", shown ? "false" : "true");
       s.g.setAttribute("aria-pressed", isPrefix(s.path, sel) && sel.length > 0 ? "true" : "false");
@@ -482,7 +482,7 @@
       }
     }
     rotateTo(focus ? -(focus.mid * 180) / Math.PI : 0);
-    animateView(targetView());
+    applyZoom(targetView());
     updateAddButton();
   }
 
@@ -772,6 +772,35 @@
     els.reflectDialog.close();
   });
 
+  // Scroll hints
+
+  function addScrollHint(body) {
+    const hint = document.createElement("div");
+    hint.className = "more-hint";
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "more-btn";
+    b.tabIndex = -1;
+    const label = document.createElement("span");
+    label.dataset.i18n = "moreBelow";
+    const arrow = document.createElement("span");
+    arrow.textContent = "↓";
+    arrow.setAttribute("aria-hidden", "true");
+    b.append(label, arrow);
+    b.addEventListener("click", () => {
+      body.scrollBy({ top: body.clientHeight * 0.8, behavior: reduceMotion.matches ? "auto" : "smooth" });
+    });
+    hint.appendChild(b);
+    body.appendChild(hint);
+
+    const update = () => {
+      body.classList.toggle("has-more", body.scrollHeight - body.scrollTop - body.clientHeight > 8);
+    };
+    body.addEventListener("scroll", update, { passive: true });
+    new ResizeObserver(update).observe(body);
+    new MutationObserver(update).observe(body, { childList: true, subtree: true, characterData: true });
+  }
+
   // Settings
 
   function applyTheme() {
@@ -809,6 +838,7 @@
     store.set("mode", mode);
     els.modeButtons.forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.mode === mode)));
     els.wheelView.hidden = mode !== "wheel";
+    if (mode === "wheel") settleInstantly();
     els.boxesView.hidden = mode !== "boxes";
     render();
   }
@@ -829,7 +859,7 @@
   window.addEventListener("resize", () => {
     if (state.mode === "boxes") layoutBoxes();
     else {
-      animateView(targetView());
+      applyZoom(targetView());
       updateAddButton();
     }
   });
@@ -886,6 +916,8 @@
     state.askReflect = els.askReflect.checked;
     store.set("askReflect", state.askReflect);
   });
+
+  document.querySelectorAll(".dlg-body").forEach(addScrollHint);
 
   applyTheme();
   applyStaticText();

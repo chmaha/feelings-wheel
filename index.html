@@ -46,7 +46,12 @@
         <span data-i18n="reveal">Reveal as you go</span>
       </label>
       <div class="wheel-wrap" id="wheel-wrap">
-        <svg id="wheel" viewBox="-500 -500 1000 1000" role="group" data-i18n-aria="title"></svg>
+        <div class="wheel-clip">
+          <div class="wheel-zoom" id="wheel-zoom">
+            <svg id="wheel" viewBox="-500 -500 1000 1000" role="group" data-i18n-aria="title"></svg>
+            <span class="hub-label" id="hub-label" aria-hidden="true"></span>
+          </div>
+        </div>
         <button type="button" class="add-btn wheel-add" id="add" hidden></button>
       </div>
     </section>
