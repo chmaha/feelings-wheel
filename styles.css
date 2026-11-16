@@ -393,6 +393,9 @@ main {
   h1 { font-size: 1.15rem; }
   .mode-toggle { order: 3; width: 100%; }
   .mode-toggle button { flex: 1; }
+  .entry { flex-wrap: wrap; }
+  .entry-main { flex-basis: calc(100% - 26px); }
+  .entry-actions { width: 100%; justify-content: flex-end; }
   .toggle button { padding: 7px 12px; }
   .boxes { --gap: 10px; }
   .box { min-height: 84px; font-size: 1.05rem; }
@@ -503,8 +506,8 @@ a { color: var(--accent); }
 dialog {
   width: min(560px, calc(100vw - 24px));
   max-height: calc(100dvh - 24px);
-  overflow: auto;
-  padding: 20px;
+  overflow: hidden;
+  padding: 0;
   border: 1px solid var(--border);
   border-radius: 20px;
   background: var(--surface-strong);
@@ -516,13 +519,32 @@ dialog::backdrop {
   background: rgba(20, 10, 30, 0.5);
 }
 
+dialog[open], #reflect-form {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+#reflect-form { flex: 1; }
+
 .dlg-head {
+  flex: none;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 8px;
+  padding: 16px 20px 8px;
 }
+
+.dlg-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 4px 20px 16px;
+}
+
+.dlg-body > :first-child { margin-top: 0; }
 
 dialog h2 { margin: 0; font-size: 1.3rem; }
 dialog h3 { margin: 20px 0 8px; font-size: 1.05rem; }
@@ -531,11 +553,16 @@ dialog p { line-height: 1.5; }
 .dlg-note, .credit { color: var(--muted); font-size: 0.92rem; margin: 0 0 12px; }
 
 .dlg-actions {
+  flex: none;
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-  margin-top: 16px;
+  padding: 12px 20px calc(16px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--border);
+  background: var(--surface-strong);
 }
+
+.dlg-actions[hidden] { display: none; }
 
 .btn {
   min-height: 44px;

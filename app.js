@@ -73,6 +73,7 @@
     listEmpty: $("list-empty"),
     entries: $("entries"),
     exportBox: $("export"),
+    listActions: $("list-actions"),
     preview: $("preview"),
     formatButtons: document.querySelectorAll("[data-format]"),
     copy: $("copy"),
@@ -318,10 +319,11 @@
   const FULL_VIEW = [-500, -500, 1000, 1000];
   const SPIN_MS = 700;
   const ZOOM_BELOW = 560;
-  const ADD_ROOM = 70;
+  const ADD_ROOM = 110;
+  const ADD_GAP = 28;
   let view = FULL_VIEW.slice();
+  let viewTarget = FULL_VIEW.slice();
   let viewAnim = null;
-  let addTimer = null;
 
   const ZOOM_BELOW_TOUCH = 900;
   const coarsePointer = window.matchMedia("(pointer: coarse)");
@@ -338,7 +340,11 @@
 
   function targetView() {
     const sel = state.sel;
-    if (!sel.length || !zoomEnabled()) return FULL_VIEW;
+    if (!zoomEnabled()) return FULL_VIEW;
+    if (!sel.length) {
+      const r = RADII[1] + 34;
+      return [-r, -r, r * 2, r * 2];
+    }
     const base = sel.length === 3 ? sel.slice(0, 2) : sel;
     const rot = (rotation * Math.PI) / 180;
     let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
@@ -373,6 +379,7 @@
 
   function animateView(target) {
     cancelAnimationFrame(viewAnim);
+    viewTarget = target.slice();
     const from = view.slice();
     if (from.every((v, i) => Math.abs(v - target[i]) < 0.01)) return false;
     if (reduceMotion.matches) {
@@ -398,20 +405,20 @@
     if (!seg) return;
     const rot = (rotation * Math.PI) / 180;
     const side = leafAddSide(sel);
-    const scale = els.svg.clientWidth / view[2];
-    const toPx = (x, y) => [(x - view[0]) * scale, (y - view[1]) * scale];
+    const v = viewTarget;
+    const scale = els.svg.clientWidth / v[2];
+    const toPx = (x, y) => [(x - v[0]) * scale, (y - v[1]) * scale];
     const half = (seg.a1 - seg.a0) / 2;
     const a = seg.mid + rot;
     const [cx] = toPx(seg.r * Math.cos(a), 0);
     const [, edgeY] = toPx(0, RADII[3] * Math.sin(a + side * half));
     const b = els.add;
     b.style.left = `${cx}px`;
-    b.style.top = `${edgeY + side * 8}px`;
+    b.style.top = `${edgeY + side * ADD_GAP}px`;
     b.style.transform = `translate(-50%, ${side > 0 ? "0" : "-100%"})`;
   }
 
-  function updateAddButton(delayed) {
-    clearTimeout(addTimer);
+  function updateAddButton() {
     const show = state.mode === "wheel" && state.sel.length === 3;
     if (!show) {
       els.add.hidden = true;
@@ -420,17 +427,10 @@
     const added = state.justAdded && samePath(state.justAdded, state.sel);
     els.add.textContent = added ? t("added") : t("add");
     els.add.disabled = Boolean(added);
-    const reveal = () => {
-      placeAddButton();
-      els.add.hidden = false;
-    };
-    if (delayed && !reduceMotion.matches) {
-      els.add.hidden = true;
-      addTimer = setTimeout(reveal, SPIN_MS);
-    } else {
-      reveal();
-    }
+    placeAddButton();
+    els.add.hidden = false;
   }
+
 
   function buildWheel() {
     const leaves = TREE.reduce((n, c) => n + c.children.reduce((m, mid) => m + mid.children.length, 0), 0);
@@ -481,9 +481,9 @@
         outlineLayer.appendChild(svgEl("path", { class: "outline", d: s.d }));
       }
     }
-    const turned = rotateTo(focus ? -(focus.mid * 180) / Math.PI : 0);
-    const zoomed = animateView(targetView());
-    updateAddButton(turned || zoomed);
+    rotateTo(focus ? -(focus.mid * 180) / Math.PI : 0);
+    animateView(targetView());
+    updateAddButton();
   }
 
   // Boxes
@@ -652,6 +652,7 @@
 
     els.listEmpty.hidden = count > 0;
     els.exportBox.hidden = count === 0;
+    els.listActions.hidden = count === 0;
     els.formatButtons.forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.format === state.format)));
     els.preview.textContent = exportText(state.format);
     els.share.hidden = typeof navigator.share !== "function";
@@ -829,7 +830,7 @@
     if (state.mode === "boxes") layoutBoxes();
     else {
       animateView(targetView());
-      updateAddButton(false);
+      updateAddButton();
     }
   });
 

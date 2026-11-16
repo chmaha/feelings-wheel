@@ -70,6 +70,7 @@
       <h2 id="list-title" data-i18n="listTitle"></h2>
       <button type="button" class="icon-btn" data-close data-i18n-aria="close">✕</button>
     </div>
+    <div class="dlg-body">
     <p class="dlg-note" data-i18n="listPrivacy"></p>
     <p class="empty" id="list-empty" data-i18n="listEmpty"></p>
     <ul class="entries" id="entries"></ul>
@@ -79,11 +80,12 @@
         <button type="button" data-format="detailed" data-i18n="fmtDetailed"></button>
       </div>
       <pre class="preview" id="preview" tabindex="0"></pre>
-      <div class="dlg-actions">
-        <button type="button" class="btn primary" id="copy" data-i18n="copy"></button>
-        <button type="button" class="btn" id="share" data-i18n="share" hidden></button>
-        <button type="button" class="btn danger" id="clear" data-i18n="clearAll"></button>
-      </div>
+    </div>
+    </div>
+    <div class="dlg-actions" id="list-actions">
+      <button type="button" class="btn primary" id="copy" data-i18n="copy"></button>
+      <button type="button" class="btn" id="share" data-i18n="share" hidden></button>
+      <button type="button" class="btn danger" id="clear" data-i18n="clearAll"></button>
     </div>
   </dialog>
 
@@ -93,6 +95,7 @@
         <h2 id="reflect-title"></h2>
         <button type="button" class="icon-btn" data-close data-i18n-aria="close">✕</button>
       </div>
+      <div class="dlg-body">
       <p class="dlg-note" data-i18n="reflectIntro"></p>
       <label class="field">
         <span data-i18n="qIntensity"></span>
@@ -114,6 +117,7 @@
         <span data-i18n="qNeed"></span>
         <textarea id="r-need" rows="2"></textarea>
       </label>
+      </div>
       <div class="dlg-actions">
         <button type="submit" class="btn primary" data-i18n="save"></button>
         <button type="button" class="btn" data-close data-i18n="skip"></button>
@@ -126,6 +130,7 @@
       <h2 id="about-title" data-i18n="aboutTitle"></h2>
       <button type="button" class="icon-btn" data-close data-i18n-aria="close">✕</button>
     </div>
+    <div class="dlg-body">
     <p data-i18n="aboutWhat"></p>
     <h3 data-i18n="howTitle"></h3>
     <ol class="how">
@@ -158,6 +163,7 @@
     <p><span data-i18n="crisis"></span> <a href="https://findahelpline.com" target="_blank" rel="noopener">findahelpline.com</a>.</p>
     <p><span data-i18n="privacyLine"></span> <a href="privacy.html" data-i18n="privacyLink"></a></p>
     <p class="credit" data-i18n="credit"></p>
+    </div>
 
     <div class="dlg-actions">
       <button type="button" class="btn primary" data-close data-i18n="getStarted"></button>
