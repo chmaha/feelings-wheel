@@ -683,6 +683,10 @@
   // Mode
 
   function setMode(mode) {
+    if (mode !== state.mode) {
+      state.sel = [];
+      state.justAdded = null;
+    }
     state.mode = mode;
     state.hover = null;
     store.set("mode", mode);
